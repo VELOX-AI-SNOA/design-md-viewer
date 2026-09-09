@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DesignMD 뷰어</title>
+__FONT_LINKS__
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Pretendard Variable", Pretendard, sans-serif; background: #ececee; color: #1a1a1c; }
+
+  /* ── 뷰어 크롬 ─────────────────────────── */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 240px; flex-shrink: 0; background: #f7f7f8; border-right: 1px solid #dcdcdf;
+             padding: 20px 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h1 { font-size: 15px; font-weight: 700; padding: 0 10px 14px; }
+  .sidebar h1 small { display: block; font-size: 11px; font-weight: 400; color: #85858c; margin-top: 2px; }
+  .brand { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px;
+           border: none; background: none; border-radius: 8px; cursor: pointer; text-align: left;
+           font: inherit; font-size: 13.5px; color: #3a3a3f; }
+  .brand:hover { background: #ececee; }
+  .brand.active { background: #e2e2e6; font-weight: 600; color: #111; }
+  .brand .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); flex-shrink: 0; }
+  .brand .mode { margin-left: auto; font-size: 10px; color: #9a9aa1; }
+  .brand .star { width: 18px; text-align: center; color: #c9c9cf; visibility: hidden;
+                 flex-shrink: 0; font-size: 13px; cursor: pointer; }
+  .brand:hover .star { visibility: visible; }
+  .brand .star:hover { color: #f5b301; }
+  .brand.fav .star { visibility: visible; color: #f5b301; }
+  .stage { flex: 1; padding: 28px; min-width: 0; }
+  .stage-caption { max-width: 1280px; margin: 14px auto 0; font-size: 12.5px; color: #77777e; text-align: center; }
+
+  /* ── 목업 (전부 CSS 변수 구동) ───────────── */
+  .mockup { max-width: 1280px; margin: 0 auto; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,.14); background: var(--canvas); color: var(--text);
+            font-family: var(--font-sans); font-feature-settings: var(--font-features, normal); }
+  .mk-inner { max-width: var(--max-width); margin: 0 auto; padding: 0 40px; }
+  .mk-nav { display: flex; align-items: center; gap: 28px; padding: 18px 40px;
+            border-bottom: 1px solid var(--border); }
+  .mk-logo { font-family: var(--font-logo); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+  .mk-menu { display: flex; gap: 22px; font-size: 14px; color: var(--text-muted); }
+  .mk-nav-spacer { flex: 1; }
+  .btn-primary { background: var(--btnp-bg); color: var(--btnp-fg); border: var(--btnp-border);
+                 border-radius: var(--btnp-radius); padding: var(--btnp-padding);
+                 font-size: var(--btnp-fs); font-weight: var(--btnp-fw); font-family: inherit; cursor: pointer;
+                 text-transform: var(--btnp-tt, none); letter-spacing: var(--btnp-ls, normal); }
+  .btn-secondary { background: var(--btns-bg); color: var(--btns-fg); border: var(--btns-border);
+                   border-radius: var(--btns-radius); padding: var(--btns-padding);
+                   font-size: var(--btns-fs); font-weight: var(--btns-fw); font-family: inherit; cursor: pointer;
+                   text-transform: var(--btns-tt, none); letter-spacing: var(--btns-ls, normal); }
+  .btn-navcta { background: var(--navcta-bg); color: var(--navcta-fg); border: var(--navcta-border);
+                border-radius: var(--navcta-radius); padding: var(--navcta-padding);
+                font-size: var(--navcta-fs); font-weight: var(--navcta-fw); font-family: inherit; cursor: pointer;
+                text-transform: var(--navcta-tt, none); letter-spacing: var(--navcta-ls, normal); }
+
+  /* 뱃지 (기본 + 다색 accentPool) */
+  .mk-badge { display: inline-block; background: var(--badge-bg); color: var(--badge-fg);
+              border: var(--badge-border); border-radius: var(--badge-radius); padding: var(--badge-padding);
+              font-size: var(--badge-fs); font-weight: var(--badge-fw);
+              font-family: var(--badge-font, inherit); text-transform: var(--badge-tt, none); }
+  .mk-badge.upper { text-transform: uppercase; letter-spacing: .08em; }
+  .mk-cards .mk-card:nth-child(1) .mk-badge { background: var(--badge1-bg); color: var(--badge1-fg); }
+  .mk-cards .mk-card:nth-child(2) .mk-badge { background: var(--badge2-bg); color: var(--badge2-fg); }
+  .mk-cards .mk-card:nth-child(3) .mk-badge { background: var(--badge3-bg); color: var(--badge3-fg); }
+
+  /* ── 보고서 표지 ─────────────────────────── */
+  .rp-cover { padding: calc(var(--section-gap) * .9) 0 var(--section-gap); }
+  .rp-eyebrow { display: inline-block; font-size: calc(var(--caption-size) * .92); font-weight: 700;
+                letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+  .rp-title { font-family: var(--font-display); font-size: var(--display-size); font-weight: var(--display-weight);
+              line-height: var(--display-lh); letter-spacing: var(--display-ls); max-width: 18ch; word-break: keep-all; }
+  .rp-lead { font-size: calc(var(--body-size) * 1.12); font-weight: var(--body-weight); line-height: 1.6;
+             color: var(--text-muted); max-width: 54ch; margin-top: 22px; word-break: keep-all; }
+  .rp-meta { display: flex; gap: 22px; margin-top: 24px; font-size: var(--caption-size);
+             color: var(--text-muted); font-weight: 500; flex-wrap: wrap; }
+  .rp-cta-row { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+
+  /* 공통 섹션 */
+  .rp-section { padding-bottom: var(--section-gap); }
+  .rp-kicker { display: block; font-size: calc(var(--caption-size) * .9); font-weight: 700;
+               letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .rp-h2 { font-family: var(--font-heading); font-size: calc(var(--heading-size) * 1.28); font-weight: var(--heading-weight);
+           line-height: 1.25; letter-spacing: var(--heading-ls); max-width: 24ch; word-break: keep-all; }
+  .rp-h3 { font-family: var(--font-heading); font-size: var(--heading-size); font-weight: var(--heading-weight);
+           line-height: var(--heading-lh); letter-spacing: var(--heading-ls); word-break: keep-all; }
+
+  /* 핵심 요약 */
+  .rp-prose { max-width: 64ch; margin-top: 20px; }
+  .rp-prose p { font-size: var(--body-size); line-height: 1.8; color: var(--text-muted); margin-bottom: 16px; word-break: keep-all; }
+  .rp-link { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .rp-quote { margin-top: 30px; padding: 6px 0 6px 24px; border-left: 3px solid var(--accent);
+              font-family: var(--font-heading); font-size: calc(var(--heading-size) * .95); line-height: 1.4;
+              font-weight: var(--heading-weight); color: var(--text); max-width: 42ch; word-break: keep-all; }
+  .rp-quote cite { display: block; margin-top: 12px; font-size: var(--caption-size); color: var(--text-muted);
+                   font-style: normal; font-weight: 500; }
+
+  /* KPI 타일 + 차트 */
+  .rp-head { max-width: 56ch; margin-bottom: 34px; }
+  .rp-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--cards-gap, 20px); }
+  .rp-kpi { border-radius: var(--card-radius); padding: 22px; min-height: 148px; display: flex; flex-direction: column;
+            background: color-mix(in srgb, var(--kpi) var(--tint), var(--canvas)); border: 1px solid var(--border); }
+  .rp-kpi .k { font-size: calc(var(--caption-size) * .88); font-weight: 700; letter-spacing: .08em;
+               text-transform: uppercase; color: var(--text-muted); }
+  .rp-kpi .v { font-size: calc(var(--display-size) * .6); font-weight: var(--display-weight); line-height: 1;
+               color: var(--text); margin-top: auto; letter-spacing: -.01em; }
+  .rp-kpi .d { font-size: var(--caption-size); color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+  .rp-kpi .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kpi); flex-shrink: 0; }
+  .rp-chart { grid-column: span 2; background: var(--surface); border: 1px solid var(--border);
+              border-radius: var(--card-radius); padding: 22px; display: flex; flex-direction: column; }
+  .rp-chart .k { font-size: calc(var(--caption-size) * .88); font-weight: 700; letter-spacing: .08em;
+                 text-transform: uppercase; color: var(--text-muted); }
+  .rp-bars { display: flex; align-items: flex-end; gap: 12px; height: 118px; margin-top: auto; }
+  .rp-bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+  .rp-bars .bar { width: 100%; border-radius: 6px 6px 0 0; }
+  .rp-bars .cap { font-size: calc(var(--caption-size) * .82); color: var(--text-muted); font-weight: 600; }
+
+  /* 데이터 테이블 */
+  .rp-table-scroll { overflow-x: auto; }
+  .rp-table { width: 100%; border-collapse: collapse; font-size: var(--body-size); min-width: 540px; }
+  .rp-table th { text-align: left; font-size: calc(var(--caption-size) * .84); font-weight: 700; letter-spacing: .06em;
+                 text-transform: uppercase; color: var(--text-muted); padding: 0 14px 12px; border-bottom: 1px solid var(--text-muted); }
+  .rp-table td { padding: 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); vertical-align: middle; }
+  .rp-table tr:last-child td { border-bottom: none; }
+  .rp-table .team { font-weight: 600; color: var(--text); }
+  .rp-progress { display: inline-block; width: 108px; height: 7px; border-radius: 9999px; background: var(--border);
+                 position: relative; vertical-align: middle; margin-right: 8px; }
+  .rp-progress i { position: absolute; inset: 0 auto 0 0; border-radius: 9999px; background: var(--accent); }
+  .rp-up { color: var(--accent); font-weight: 700; }
+  .rp-flat { color: var(--text-muted); font-weight: 600; }
+  .rp-tbadge { display: inline-block; border-radius: var(--badge-radius); padding: 3px 10px; font-size: calc(var(--caption-size)*.85);
+               font-weight: 600; }
+  .rp-table tr:nth-child(1) .rp-tbadge { background: var(--badge1-bg); color: var(--badge1-fg); }
+  .rp-table tr:nth-child(2) .rp-tbadge { background: var(--badge2-bg); color: var(--badge2-fg); }
+  .rp-table tr:nth-child(3) .rp-tbadge { background: var(--badge3-bg); color: var(--badge3-fg); }
+  .rp-table tr:nth-child(4) .rp-tbadge { background: var(--badge-bg); color: var(--badge-fg); }
+
+  /* 발견 카드 */
+  .mk-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--cards-gap, 20px); padding-bottom: var(--section-gap); }
+  .mk-card { background: var(--card-bg); border: var(--card-border); border-radius: var(--card-radius);
+             padding: var(--card-padding); box-shadow: var(--card-shadow); color: var(--card-fg); }
+  .mk-card h3 { font-size: var(--heading-size); font-weight: var(--heading-weight); line-height: var(--heading-lh);
+                letter-spacing: var(--heading-ls); margin: 14px 0 10px; font-family: var(--font-heading); word-break: keep-all; }
+  .mk-card p { font-size: var(--body-size); line-height: var(--body-lh); color: var(--text-muted); word-break: keep-all; }
+
+  /* 시그니처 스탯 밴드 (accent 배경 + onAccent) */
+  .rp-signature { background: var(--accent); color: var(--on-accent); border-radius: var(--card-radius);
+                  padding: calc(var(--card-padding) * 1.7); margin-bottom: var(--section-gap);
+                  display: flex; gap: 44px; align-items: center; flex-wrap: wrap; }
+  .rp-signature .huge { font-family: var(--font-display); font-size: calc(var(--display-size) * 1.1);
+                        font-weight: var(--display-weight); line-height: .95; letter-spacing: var(--display-ls); }
+  .rp-signature .sig-body { flex: 1; min-width: 280px; }
+  .rp-signature h3 { font-family: var(--font-heading); font-size: var(--heading-size); font-weight: var(--heading-weight);
+                     line-height: 1.25; margin-bottom: 10px; color: var(--on-accent); word-break: keep-all; }
+  .rp-signature p { font-size: var(--body-size); line-height: 1.65; opacity: .84; word-break: keep-all; }
+
+  /* 뉴스레터 폼 */
+  .mk-form { padding-bottom: var(--section-gap); }
+  .mk-form h4 { font-size: calc(var(--heading-size) * .82); font-weight: var(--heading-weight); margin-bottom: 18px; font-family: var(--font-heading); }
+  .mk-form-row { display: flex; gap: 10px; max-width: 460px; }
+  .mk-input { flex: 1; background: var(--input-bg); color: var(--input-fg); border: var(--input-border);
+              border-radius: var(--input-radius); padding: var(--input-padding);
+              font-size: var(--body-size); font-family: inherit; min-width: 0; }
+  .mk-input::placeholder { color: var(--text-muted); }
+
+  /* 팔레트 */
+  .mk-palette { padding-bottom: var(--section-gap); }
+  .mk-palette h4 { font-family: var(--font-heading); font-size: calc(var(--heading-size) * .82);
+                   font-weight: var(--heading-weight); margin-bottom: 18px; }
+  .mk-palette-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; }
+  .mk-swatch-chip { height: 64px; border-radius: var(--card-radius); border: 1px solid var(--border); }
+  .mk-swatch b { display: block; font-size: 13px; margin-top: 8px; font-weight: 600; }
+  .mk-swatch span { font-size: var(--caption-size); color: var(--text-muted); font-family: var(--font-mono); }
+  .mk-footer { border-top: 1px solid var(--border); padding: 26px 40px; display: flex; gap: 18px;
+               font-size: var(--caption-size); color: var(--text-muted); }
+  @media (max-width: 900px) {
+    .mk-cards { grid-template-columns: 1fr; } .mk-nav { padding: 18px 20px; } .mk-inner { padding: 0 20px; }
+    .rp-kpis { grid-template-columns: repeat(2, 1fr); } .rp-chart { grid-column: span 2; }
+  }
+  @media (max-width: 560px) { .rp-kpis { grid-template-columns: 1fr; } .rp-chart { grid-column: span 1; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar"><h1>DesignMD 뷰어<small>디자인 시스템 보고서 목업</small></h1><div id="brand-list"></div></nav>
+  <main class="stage">
+    <div class="mockup" id="mockup">
+      <div class="mk-nav">
+        <span class="mk-logo" id="mk-logo"></span>
+        <span class="mk-nav-spacer"></span>
+        <span class="mk-menu"><span>요약</span><span>지표</span><span>발견</span></span>
+        <button class="btn-navcta">PDF 내려받기</button>
+      </div>
+      <div class="mk-inner">
+        <!-- 표지 -->
+        <section class="rp-cover">
+          <span class="rp-eyebrow">Field Report · 2026</span>
+          <h1 class="rp-title">생각의 속도로 움직이는 팀 워크스페이스</h1>
+          <p class="rp-lead">흩어진 도구를 하나로 모았을 때 팀이 되찾는 시간 — 12개 산업 2,400개 팀의 도입 데이터로 본 2026 생산성 현황 보고서.</p>
+          <div class="rp-meta"><span>발행 2026.08.31</span><span id="mk-author"></span><span>열람 12분</span></div>
+          <div class="rp-cta-row">
+            <button class="btn-primary">보고서 읽기</button>
+            <button class="btn-secondary">요약 보기</button>
+          </div>
+        </section>
+
+        <!-- 핵심 요약 -->
+        <section class="rp-section">
+          <span class="rp-kicker">Executive Summary</span>
+          <h2 class="rp-h2">평균적인 팀은 하루 2.1시간을 도구 사이에서 잃습니다</h2>
+          <div class="rp-prose">
+            <p>직원 한 사람이 업무에 쓰는 앱은 평균 9개. 문제는 개수가 아니라 이음매입니다. 스프레드시트의 숫자를 채팅으로 옮기고 그 결정을 다시 문서에 적는 사이에서 맥락이 새어 나갑니다. 자세한 방법론은 <a class="rp-link" href="#">부록</a>에서 확인할 수 있습니다.</p>
+            <p>하나의 워크스페이스로 도구를 통합한 팀은 그렇지 않은 팀 대비 프로젝트 리드타임이 평균 34% 짧았고, 반복 업무 자동화로 주당 6.8시간을 회수했습니다.</p>
+          </div>
+          <blockquote class="rp-quote">“도구를 더 사지 마세요. 도구 사이의 거리를 없애세요.”<cite>— 보고서 서문 중</cite></blockquote>
+        </section>
+
+        <!-- 지표: KPI 타일 + 차트 -->
+        <section class="rp-section">
+          <div class="rp-head">
+            <span class="rp-kicker">By the numbers</span>
+            <h3 class="rp-h3">통합 워크스페이스 도입 팀의 지표</h3>
+          </div>
+          <div class="rp-kpis">
+            <div class="rp-kpi" style="--kpi:var(--acc-1)">
+              <div class="k">리드타임 단축</div><div class="v">34%</div>
+              <div class="d"><span class="dot"></span>전년 대비 ▲ 8%p</div>
+            </div>
+            <div class="rp-kpi" style="--kpi:var(--acc-2)">
+              <div class="k">주당 회수 시간</div><div class="v">6.8h</div>
+              <div class="d"><span class="dot"></span>전년 대비 ▲ 1.2h</div>
+            </div>
+            <div class="rp-chart">
+              <div class="k">산업별 도입률</div>
+              <div class="rp-bars">
+                <div class="col"><div class="bar" style="height:64%;background:var(--acc-1)"></div><div class="cap">미디어</div></div>
+                <div class="col"><div class="bar" style="height:82%;background:var(--acc-2)"></div><div class="cap">금융</div></div>
+                <div class="col"><div class="bar" style="height:48%;background:var(--acc-3)"></div><div class="cap">교육</div></div>
+                <div class="col"><div class="bar" style="height:95%;background:var(--acc-4)"></div><div class="cap">SaaS</div></div>
+                <div class="col"><div class="bar" style="height:57%;background:var(--acc-5)"></div><div class="cap">제조</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 데이터 테이블 -->
+        <section class="rp-section">
+          <div class="rp-head">
+            <span class="rp-kicker">Adoption detail</span>
+            <h3 class="rp-h3">팀 유형별 도입 현황과 전분기 대비 변화</h3>
+          </div>
+          <div class="rp-table-scroll">
+            <table class="rp-table">
+              <thead><tr><th>팀 유형</th><th>도입률</th><th>전분기</th><th>회수 시간</th><th>상태</th></tr></thead>
+              <tbody>
+                <tr><td class="team">프로덕트 & 엔지니어링</td><td><span class="rp-progress"><i style="width:88%"></i></span>88%</td><td class="rp-up">▲ 9%p</td><td>8.4h/주</td><td><span class="rp-tbadge">안정 도입</span></td></tr>
+                <tr><td class="team">마케팅 & 콘텐츠</td><td><span class="rp-progress"><i style="width:74%"></i></span>74%</td><td class="rp-up">▲ 15%p</td><td>6.1h/주</td><td><span class="rp-tbadge">안정 도입</span></td></tr>
+                <tr><td class="team">오퍼레이션 & 재무</td><td><span class="rp-progress"><i style="width:61%"></i></span>61%</td><td class="rp-up">▲ 6%p</td><td>5.3h/주</td><td><span class="rp-tbadge">확산 중</span></td></tr>
+                <tr><td class="team">인사 & 채용</td><td><span class="rp-progress"><i style="width:39%"></i></span>39%</td><td class="rp-flat">— 0%p</td><td>3.0h/주</td><td><span class="rp-tbadge">파일럿</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 주요 발견 카드 -->
+        <section>
+          <div class="rp-head">
+            <span class="rp-kicker">Key findings</span>
+            <h3 class="rp-h3">현장에서 확인한 세 가지 변화</h3>
+          </div>
+          <div class="mk-cards">
+            <div class="mk-card"><span class="mk-badge upper">Workflow</span><h3>자동화된 흐름</h3><p>반복 작업을 규칙에 맡긴 팀은 중요한 결정에 집중했고, 승인 리드타임이 절반으로 줄었습니다.</p></div>
+            <div class="mk-card"><span class="mk-badge upper">Insight</span><h3>실시간 인사이트</h3><p>진행 상황을 하나의 대시보드로 모으자 주간 회의 시간이 45분에서 12분으로 단축됐습니다.</p></div>
+            <div class="mk-card"><span class="mk-badge upper">Scale</span><h3>퍼지는 방식</h3><p>한 팀이 만든 워크플로가 평균 10개 팀으로 복제됐습니다. 도구가 아니라 방식이 퍼진 것입니다.</p></div>
+          </div>
+        </section>
+
+        <!-- 시그니처 스탯 밴드 -->
+        <section class="rp-signature">
+          <div class="huge">3.2배</div>
+          <div class="sig-body">
+            <h3>프로토타입 속도로 프로덕션까지</h3>
+            <p>통합 워크스페이스 위에서 만든 내부 도구는 별도 개발 없이 팀이 직접 운영에 올립니다. 도입 팀이 첫 90일 안에 배포한 사내 앱 수는 기존 대비 3.2배였습니다.</p>
+          </div>
+        </section>
+
+        <!-- 뉴스레터 -->
+        <section class="mk-form">
+          <h4>다음 필드 리포트를 가장 먼저 받아보세요</h4>
+          <div class="mk-form-row">
+            <input class="mk-input" placeholder="이메일 주소">
+            <button class="btn-primary">구독하기</button>
+          </div>
+        </section>
+
+        <!-- 팔레트 -->
+        <section class="mk-palette">
+          <h4>Color Palette</h4>
+          <div class="mk-palette-grid" id="mk-palette-grid"></div>
+        </section>
+      </div>
+      <div class="mk-footer"><span id="mk-copy"></span><span>이용약관</span><span>개인정보처리방침</span></div>
+    </div>
+    <p class="stage-caption" id="caption"></p>
+  </main>
+</div>
+<script>
+const DESIGNS = __DESIGN_DATA__;
+
+function applyDesign(d) {
+  const mk = document.getElementById('mockup');
+  const s = (k, v) => mk.style.setProperty(k, v);
+  const c = d.colors, t = d.type, cm = d.components;
+  s('--canvas', c.canvas); s('--text', c.text); s('--text-muted', c.textMuted); s('--border', c.border);
+  s('--surface', c.surface); s('--accent', c.accent); s('--on-accent', c.onAccent);
+  s('--font-sans', d.fonts.sans); s('--font-display', d.fonts.display);
+  s('--max-width', d.layout.maxWidth); s('--section-gap', d.layout.sectionGap);
+  s('--display-size', Math.min(t.display.size, 72) + 'px'); s('--display-weight', t.display.weight);
+  s('--display-lh', t.display.lineHeight); s('--display-ls', t.display.letterSpacing || 'normal');
+  s('--heading-size', t.heading.size + 'px'); s('--heading-weight', t.heading.weight);
+  s('--heading-lh', t.heading.lineHeight); s('--heading-ls', t.heading.letterSpacing || 'normal');
+  s('--body-size', t.body.size + 'px'); s('--body-weight', t.body.weight); s('--body-lh', t.body.lineHeight);
+  s('--caption-size', t.caption.size + 'px');
+  const comp = (prefix, o) => {
+    s(`--${prefix}-bg`, o.bg); s(`--${prefix}-fg`, o.fg);
+    s(`--${prefix}-border`, o.border === 'none' ? 'none' : o.border);
+    s(`--${prefix}-radius`, o.radius); s(`--${prefix}-padding`, o.padding);
+    if (o.fontSize) s(`--${prefix}-fs`, o.fontSize + 'px');
+    if (o.fontWeight) s(`--${prefix}-fw`, o.fontWeight);
+    s(`--${prefix}-tt`, o.textTransform ?? 'none');
+    s(`--${prefix}-ls`, o.letterSpacing ?? 'normal');
+  };
+  comp('btnp', cm.buttonPrimary); comp('btns', cm.buttonSecondary); comp('badge', cm.badge);
+  comp('navcta', cm.navCta);
+  s('--font-heading', d.fonts.heading); s('--font-logo', d.fonts.logo);
+  s('--font-features', d.fonts.features ?? 'normal');
+  s('--badge-font', cm.badge.mono ? d.fonts.mono : 'inherit');
+  s('--badge-tt', cm.badge.uppercase ? 'uppercase' : 'none');
+  s('--cards-gap', d.layout.cardsGap ?? '20px');
+  s('--card-bg', cm.card.bg); s('--card-fg', cm.card.fg ?? c.text);
+  s('--card-border', cm.card.border === 'none' ? 'none' : cm.card.border);
+  s('--card-radius', cm.card.radius); s('--card-padding', cm.card.padding ?? '24px');
+  s('--card-shadow', cm.card.shadow ?? 'none');
+  s('--input-bg', cm.input.bg); s('--input-fg', cm.input.fg); s('--input-border', cm.input.border);
+  s('--input-radius', cm.input.radius); s('--input-padding', cm.input.padding);
+  // accentPool 노출 — 카드 뱃지·KPI 타일·차트·테이블 뱃지가 순환 사용
+  const pool = d.accentPool && d.accentPool.length ? d.accentPool : [c.accent];
+  const tintPct = d.theme === 'dark' ? 22 : 14;
+  s('--tint', tintPct + '%');
+  for (let i = 0; i < 8; i++) s(`--acc-${i + 1}`, pool[i % pool.length]);
+  for (let i = 0; i < 3; i++) {
+    const col = pool[i % pool.length];
+    s(`--badge${i + 1}-bg`, `color-mix(in srgb, ${col} ${tintPct}%, ${c.canvas})`);
+    s(`--badge${i + 1}-fg`, col);
+  }
+  s('--font-mono', d.fonts.mono);
+  // Color Palette 섹션
+  const grid = document.getElementById('mk-palette-grid');
+  grid.textContent = '';
+  const paletteSection = document.querySelector('.mk-palette');
+  paletteSection.style.display = d.palette && d.palette.length ? '' : 'none';
+  for (const p of d.palette ?? []) {
+    const item = document.createElement('div');
+    item.className = 'mk-swatch';
+    const chip = document.createElement('div');
+    chip.className = 'mk-swatch-chip';
+    chip.style.background = p.value;
+    const name = document.createElement('b');
+    name.textContent = p.name;
+    const val = document.createElement('span');
+    val.textContent = p.value;
+    item.append(chip, name, val);
+    grid.appendChild(item);
+  }
+  document.getElementById('mk-logo').textContent = d.name;
+  document.getElementById('mk-author').textContent = d.name + ' 리서치';
+  document.getElementById('mk-copy').textContent = `© 2026 ${d.name}`;
+  document.getElementById('caption').textContent = d.tagline ? `${d.name} — ${d.tagline}` : d.name;
+  currentId = d.id;
+  document.querySelectorAll('.brand').forEach(b => b.classList.toggle('active', b.dataset.id === d.id));
+  document.querySelector(`.brand[data-id="${CSS.escape(d.id)}"]`)?.scrollIntoView({ block: 'nearest' });
+}
+
+const FAV_KEY = 'designmd:favorites';
+const favorites = new Set(loadFavorites());
+let currentId = null;
+
+function loadFavorites() {
+  try {
+    const v = JSON.parse(localStorage.getItem(FAV_KEY));
+    return Array.isArray(v) ? v : [];
+  } catch { return []; }
+}
+function saveFavorites() {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch {}
+}
+function toggleFavorite(id) {
+  favorites.has(id) ? favorites.delete(id) : favorites.add(id);
+  saveFavorites();
+  renderList();
+  document.querySelector(`.brand[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' });
+}
+
+function sortedDesigns() {
+  return [...DESIGNS.filter(d => favorites.has(d.id)), ...DESIGNS.filter(d => !favorites.has(d.id))];
+}
+
+function renderList() {
+  const list = document.getElementById('brand-list');
+  list.textContent = '';
+  for (const d of sortedDesigns()) {
+    const b = document.createElement('button');
+    b.className = 'brand' + (favorites.has(d.id) ? ' fav' : '');
+    b.dataset.id = d.id;
+    const dot = document.createElement('span');
+    dot.className = 'dot'; dot.style.background = d.colors.accent;
+    const name = document.createElement('span');
+    name.textContent = d.name;
+    const mode = document.createElement('span');
+    mode.className = 'mode'; mode.textContent = d.theme;
+    const star = document.createElement('span');
+    star.className = 'star'; star.textContent = favorites.has(d.id) ? '★' : '☆';
+    star.title = '즐겨찾기';
+    star.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(d.id); });
+    b.append(dot, name, mode, star);
+    b.addEventListener('click', () => applyDesign(d));
+    list.appendChild(b);
+  }
+  if (currentId) {
+    document.querySelectorAll('.brand').forEach(b => b.classList.toggle('active', b.dataset.id === currentId));
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  const tag = e.target?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  const order = sortedDesigns();
+  const idx = order.findIndex(d => d.id === currentId);
+  const next = order[idx + (e.key === 'ArrowDown' ? 1 : -1)];
+  if (next) applyDesign(next);
+});
+
+renderList();
+if (DESIGNS.length) applyDesign(sortedDesigns()[0]);
+</script>
+</body>
+</html>
