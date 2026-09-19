@@ -17,13 +17,13 @@
 각 디자인 문서에 명시된 폰트를 사용합니다. 상용 폰트는 문서가 지정한 대체 폰트로
 렌더링합니다 (Ivy Presto→Playfair Display, PolySans→Space Grotesk, SF Pro/Haas/FerrariSans→Inter,
 Berkeley Mono→JetBrains Mono). 한글은 Pretendard(세리프는 Noto Serif KR)로 폴백합니다.
-문서의 Do's and Don'ts 지침(액센트 화면당 1회, Ferrari 대문자 CTA, Slash 세리프 28px 이상 등)은
+문서의 Do's and Don'ts 지침(Ferrari 대문자 CTA, Slash 세리프 28px 이상 등)은
 `lib/usage-rules.js`에 데이터로 반영되어 있습니다.
 
 ## 지원 포맷
 
 1. OMD — frontmatter에 `tokens:` (kakao 등)
 2. alpha — frontmatter에 `version: alpha` (airtable 등)
-3. Style Reference — `# 이름 — Style Reference` 헤더 (linear 등). `**Theme:** dark|light` 라인 필수 — 없으면 light로 고정됨
+3. Style Reference — `# 이름 — Style Reference` 헤더 (slash 등). `**Theme:** dark|light` 라인 필수 — 없으면 light로 고정됨
 
 파싱이 어긋나는 디자인은 `lib/overrides.js`에 id별 보정값을 넣어 고친다.

@@ -16,7 +16,7 @@ test('buildDesigns: 원본 11개 디자인 포함, 폴더 전체 파싱', () => 
 
 test('buildDesigns: 스펙 스팟체크 — 액센트 색', () => {
   const by = Object.fromEntries(buildDesigns(SRC).map(d => [d.id, d]));
-  assert.equal(by.linear.components.buttonPrimary.bg.toLowerCase(), '#e4f222');
+  assert.equal(by.linear.components.buttonPrimary.bg.toLowerCase(), '#e5e5e6'); // primary-action 라이트 스틸
   assert.equal(by.kakao.components.buttonPrimary.bg.toLowerCase(), '#fee500');
   assert.equal(by.ferrari.components.buttonPrimary.bg.toLowerCase(), '#da291c');
   assert.equal(by.apple.colors.textMuted.toLowerCase(), '#7a7a7a');
@@ -60,7 +60,7 @@ test('buildDesigns v2: 명시 폰트·사용 지침 반영', () => {
   assert.match(by.kakaogames.fonts.sans, /SUIT/);
   assert.match(by.apple.fonts.sans, /"Inter"/);
   // 사용 지침
-  assert.notEqual(by.linear.components.navCta.bg.toLowerCase(), '#e4f222'); // 액센트 1회
+  assert.equal(by.linear.components.navCta.bg.toLowerCase(), '#e5e5e6');    // 인디고·라임을 기본 CTA로 쓰지 않음
   assert.equal(by.factory.components.badge.mono, true);
   assert.equal(by.ferrari.components.buttonPrimary.textTransform, 'uppercase');
   assert.ok(!/Playfair/.test(by.slash.fonts.heading));                      // 세리프 28px 규칙
@@ -70,13 +70,21 @@ test('buildDesigns v2: 명시 폰트·사용 지침 반영', () => {
   assert.ok(by.linear.webfonts.includes('Inter'));
 });
 
+test('buildDesigns: linear 버튼이 납작하지 않음', () => {
+  const by = Object.fromEntries(buildDesigns(SRC).map(d => [d.id, d]));
+  // comp()가 height를 버리면 padding "0 20px"만 남아 버튼이 약 21px로 납작해진다.
+  for (const key of ['buttonPrimary', 'buttonSecondary', 'navCta']) {
+    assert.doesNotMatch(by.linear.components[key].padding, /^0\s/, `linear.${key} 세로 padding 0`);
+  }
+});
+
 test('buildDesigns: 팔레트·액센트 풀', () => {
   const by = Object.fromEntries(buildDesigns(SRC).map(d => [d.id, d]));
   assert.ok(by.lemonbase.palette.length >= 12, `lemonbase palette ${by.lemonbase.palette.length}`);
   assert.ok(by.lemonbase.accentPool.map(v => v.toLowerCase()).includes('#c7317b'));
   assert.equal(by.slash.accentPool.length, 1);                    // 코퍼 단일 — 진성 단색 풀
   assert.ok(by.returnzero.accentPool.length >= 4);                // 민트·블루·옐로 문서 명시
-  assert.ok(by.linear.accentPool.length >= 3);
+  assert.equal(by.linear.accentPool.length, 1);                   // 인디고 단일 — 라임은 편집용 변형이라 토큰 아님
   for (const d of buildDesigns(SRC)) {
     assert.ok(Array.isArray(d.palette), `${d.id} palette 배열 아님`);
     assert.ok(d.accentPool.length >= 1, `${d.id} accentPool 비어 있음`);

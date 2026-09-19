@@ -61,6 +61,17 @@ test('parseOmd: 컴포넌트 선택과 CompSpec 변환', () => {
   assert.equal(d.components.badge.fg, '#666666');
 });
 
+test('parseOmd: primary-action 컴포넌트를 주 버튼으로 선택', () => {
+  // linear·banksalad 등은 주 버튼을 button-* 대신 primary-action으로 명명한다.
+  const fm = { name: 'L', primary_color: '#5e6ad2', tokens: { colors: { primary: '#5e6ad2' }, components: {
+    'primary-action': { type: 'button', bg: '#e5e5e6', fg: '#08090a', radius: '9999px', padding: '0 20px', font: '16px / 510' }
+  } } };
+  const b = parseOmd(fm, 'linear').components.buttonPrimary;
+  assert.equal(b?.bg, '#e5e5e6');
+  assert.equal(b?.fg, '#08090a');
+  assert.equal(b?.padding, '0 20px');
+});
+
 test('parseOmd: radius 토큰 매핑', () => {
   const d = parseOmd(FM, 'kakao');
   assert.equal(d.radius.pill, '9999px');
