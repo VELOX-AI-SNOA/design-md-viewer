@@ -10,7 +10,7 @@
 - 수동 빌드: `node build.js` (다른 폴더 대상: `node build.js "D:\다른\폴더"`)
 - `index.html`만 열어도 되지만 마지막 빌드 시점의 내용입니다.
 - 테스트: `npm test`
-- 최초 1회: `npm install` (js-yaml 설치)
+- 최초 1회: `npm install` (js-yaml 설치) — bat은 필요한 패키지(js-yaml)가 없으면 자동으로 설치합니다.
 
 ## 폰트
 
